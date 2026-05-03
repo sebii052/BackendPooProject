@@ -248,23 +248,27 @@ public:
 
     static int getColumnInt(SQLHSTMT stmt,
         SQLUSMALLINT col) {
-        // Citim ca string si convertim la int
-        // SQL_C_LONG poate returna 0 gresit pe unele configuratii ODBC
-        SQLWCHAR buf[64] = { 0 };
+        // Citim ca WCHAR (la fel ca getColumn) pentru consistenta
+        // Evita probleme de cursor state dupa mixed-type reads
+        SQLWCHAR buf[32] = { 0 };
         SQLLEN   indicator = 0;
-        SQLGetData(stmt, col, SQL_C_WCHAR,
+        SQLRETURN ret = SQLGetData(stmt, col, SQL_C_WCHAR,
             buf, sizeof(buf), &indicator);
-        if (indicator == SQL_NULL_DATA || indicator <= 0) return 0;
-        buf[63] = L'\0';
-        // Convertire simpla wchar -> string -> int
-        std::wstring ws(buf);
-        if (ws.empty()) return 0;
-        try {
-            return std::stoi(std::string(ws.begin(), ws.end()));
+        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) return 0;
+        if (indicator == SQL_NULL_DATA) return 0;
+        buf[31] = L'\0';
+        if (buf[0] == L'\0') return 0;
+        // Convertire wchar -> int fara a trece prin std::string
+        // (evita probleme cu caractere non-ASCII, desi int-urile sunt ASCII)
+        int result = 0;
+        bool negative = false;
+        const wchar_t* p = buf;
+        if (*p == L'-') { negative = true; p++; }
+        while (*p >= L'0' && *p <= L'9') {
+            result = result * 10 + (*p - L'0');
+            p++;
         }
-        catch (...) {
-            return 0;
-        }
+        return negative ? -result : result;
     }
 
     static double getColumnDouble(SQLHSTMT stmt,

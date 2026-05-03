@@ -180,11 +180,11 @@ public:
             "FROM Sesizari WHERE status='Nerezolvata' "
             "ORDER BY data_creare ASC",
             [&](SQLHSTMT stmt) {
-                result.emplace_back(
-                    DatabaseManager::getColumnInt(stmt, 1),
-                    DatabaseManager::getColumnInt(stmt, 2),
-                    DatabaseManager::getColumn(stmt, 3),
-                    DatabaseManager::getColumn(stmt, 4));
+                int         id_ses = DatabaseManager::getColumnInt(stmt, 1);
+                int         id_zona = DatabaseManager::getColumnInt(stmt, 2);
+                std::string desc = DatabaseManager::getColumn(stmt, 3);
+                std::string data = DatabaseManager::getColumn(stmt, 4);
+                result.emplace_back(id_ses, id_zona, desc, data);
             });
         return result;
     }
@@ -257,11 +257,12 @@ public:
             "FROM Taskuri WHERE id_angajat=" + std::to_string(idAngajat) +
             " ORDER BY data_creare DESC",
             [&](SQLHSTMT stmt) {
-                res.emplace_back(
-                    DatabaseManager::getColumnInt(stmt, 1),
-                    DatabaseManager::getColumn(stmt, 2),
-                    DatabaseManager::getColumn(stmt, 3),
-                    DatabaseManager::getColumn(stmt, 4));
+                // Citire in variabile locale - garanteaza ordinea col 1,2,3,4
+                int         id = DatabaseManager::getColumnInt(stmt, 1);
+                std::string tip = DatabaseManager::getColumn(stmt, 2);
+                std::string desc = DatabaseManager::getColumn(stmt, 3);
+                std::string status = DatabaseManager::getColumn(stmt, 4);
+                res.emplace_back(id, tip, desc, status);
             });
         return res;
     }
@@ -486,11 +487,11 @@ public:
             "FROM Notificari WHERE id_destinatar=" + std::to_string(idAngajat) +
             " ORDER BY data_creare DESC",
             [&](SQLHSTMT stmt) {
-                result.emplace_back(
-                    DatabaseManager::getColumnInt(stmt, 1),
-                    DatabaseManager::getColumnInt(stmt, 2),
-                    DatabaseManager::getColumn(stmt, 3),
-                    DatabaseManager::getColumnInt(stmt, 4) == 1);
+                int         id_notif = DatabaseManager::getColumnInt(stmt, 1);
+                int         id_task = DatabaseManager::getColumnInt(stmt, 2);
+                std::string mesaj = DatabaseManager::getColumn(stmt, 3);
+                bool        citita = (DatabaseManager::getColumnInt(stmt, 4) == 1);
+                result.emplace_back(id_notif, id_task, mesaj, citita);
             });
         return result;
     }
