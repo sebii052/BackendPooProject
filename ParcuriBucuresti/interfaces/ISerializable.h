@@ -6,8 +6,8 @@
 // Orice entitate care poate fi convertita in string
 // pentru logging, debug sau export
 // ============================================================
-class ISerializable {
+class ISerializabil {
 public:
-    virtual ~ISerializable() = default;
+    virtual ~ISerializabil() = default;
     virtual std::string toString() const = 0;
 };

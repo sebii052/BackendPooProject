@@ -29,7 +29,7 @@ inline std::string tipZonaToString(TipZona t) {
 // ============================================================
 // CLASA Zona
 // ============================================================
-class Zona : public ISerializable, public IValidatable {
+class Zona : public ISerializabil, public IValidatabil {
 private:
     int         m_idZona;
     int         m_idParc;
@@ -112,7 +112,7 @@ public:
 // ============================================================
 // CLASA Parc
 // ============================================================
-class Parc : public ISerializable, public IValidatable {
+class Parc : public ISerializabil, public IValidatabil {
 private:
     int         m_idParc;
     std::string m_nume;

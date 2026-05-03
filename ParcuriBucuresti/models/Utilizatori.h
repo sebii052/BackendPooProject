@@ -10,7 +10,7 @@
 // ============================================================
 // CLASA ABSTRACTA User
 // ============================================================
-class User : public ISerializable, public IValidatable {
+class User : public ISerializabil, public IValidatabil {
 protected:
     int         m_idUser;
     std::string m_rol;
@@ -21,11 +21,11 @@ public:
 
     virtual ~User() = default;
 
-    virtual bool        poateCreaTask()      const = 0;
-    virtual bool        poateCreaRaport()    const = 0;
-    virtual bool        poateCreaEveniment() const = 0;
-    virtual bool        poateVedeaInventar() const = 0;
-    virtual std::string getActiunePrincipala() const = 0;
+    virtual bool        poateCreaTask()         const = 0;
+    virtual bool        poateCreaRaport()       const = 0;
+    virtual bool        poateCreaEveniment()    const = 0;
+    virtual bool        poateVedeaInventar()    const = 0;
+    virtual std::string getActiunePrincipala()  const = 0;
 
     int         getIdUser() const { return m_idUser; }
     std::string getRol()    const { return m_rol;    }

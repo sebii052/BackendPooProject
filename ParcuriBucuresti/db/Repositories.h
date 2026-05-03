@@ -19,10 +19,10 @@ template<typename T>
 class IRepository {
 public:
     virtual ~IRepository() = default;
-    virtual bool             salveaza(const T& entitate)  = 0;
-    virtual bool             sterge(int id)               = 0;
-    virtual std::optional<T> gasesteDupaId(int id)        = 0;
-    virtual std::vector<T>   getToate()                   = 0;
+    virtual bool             salveaza(const T& entitate) = 0;
+    virtual bool             sterge(int id) = 0;
+    virtual std::optional<T> gasesteDupaId(int id) = 0;
+    virtual std::vector<T>   getToate() = 0;
 };
 
 // ============================================================
@@ -34,8 +34,8 @@ public:
     explicit UtilizatorRepository(DatabaseManager& db) : m_db(db) {}
 
     bool verificaLogin(const std::string& username,
-                       const std::string& parolaHash,
-                       std::string& rolOut) {
+        const std::string& parolaHash,
+        std::string& rolOut) {
         bool found = false;
         std::string q =
             "SELECT rol FROM Utilizatori "
@@ -44,17 +44,17 @@ public:
             "' AND activ=1";
         m_db.interogheaza(q, [&](SQLHSTMT stmt) {
             rolOut = DatabaseManager::getColumn(stmt, 1);
-            found  = true;
-        });
+            found = true;
+            });
         return found;
     }
 
     bool inregistreazaAngajat(const std::string& username,
-                               const std::string& parolaHash,
-                               const std::string& nume,
-                               const std::string& prenume,
-                               const std::string& email,
-                               int idZonaAlocata) {
+        const std::string& parolaHash,
+        const std::string& nume,
+        const std::string& prenume,
+        const std::string& email,
+        int idZonaAlocata) {
         try {
             m_db.executa(
                 "INSERT INTO Utilizatori "
@@ -63,7 +63,8 @@ public:
                 "','Angajat','" + nume + "','" + prenume +
                 "','" + email + "'," + std::to_string(idZonaAlocata) + ")");
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     struct InfoAngajat {
@@ -88,16 +89,16 @@ public:
 
         m_db.interogheaza(q, [&](SQLHSTMT stmt) {
             InfoAngajat a;
-            a.id          = DatabaseManager::getColumnInt(stmt, 1);
+            a.id = DatabaseManager::getColumnInt(stmt, 1);
             // col2=nume, col3=prenume => prenume + " " + nume
             a.numeComplet = DatabaseManager::getColumn(stmt, 3) + " " +
-                            DatabaseManager::getColumn(stmt, 2);
-            a.username    = DatabaseManager::getColumn(stmt, 4);
-            a.idZona      = DatabaseManager::getColumnInt(stmt, 5);
-            a.idTaskCurent= DatabaseManager::getColumnInt(stmt, 6);
-            a.esteLiber   = (a.idTaskCurent == -1);
+                DatabaseManager::getColumn(stmt, 2);
+            a.username = DatabaseManager::getColumn(stmt, 4);
+            a.idZona = DatabaseManager::getColumnInt(stmt, 5);
+            a.idTaskCurent = DatabaseManager::getColumnInt(stmt, 6);
+            a.esteLiber = (a.idTaskCurent == -1);
             result.push_back(a);
-        });
+            });
         return result;
     }
 
@@ -141,7 +142,8 @@ public:
                 "ignorata=1, data_procesare=GETDATE() "
                 "WHERE id_sesizare=" + std::to_string(idSesizare));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     bool marcheazaTransformata(int idSesizare) {
@@ -151,13 +153,14 @@ public:
                 "data_procesare=GETDATE() "
                 "WHERE id_sesizare=" + std::to_string(idSesizare));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     // Returneaza: (id_sesizare, id_zona, descriere, data_creare)
-    std::vector<std::tuple<int,int,std::string,std::string>>
-    getSesizariNerezolvate() {
-        std::vector<std::tuple<int,int,std::string,std::string>> result;
+    std::vector<std::tuple<int, int, std::string, std::string>>
+        getSesizariNerezolvate() {
+        std::vector<std::tuple<int, int, std::string, std::string>> result;
         m_db.interogheaza(
             "SELECT id_sesizare, id_zona, descriere, data_creare "
             "FROM Sesizari WHERE status='Nerezolvata' "
@@ -182,8 +185,8 @@ public:
     explicit TaskRepository(DatabaseManager& db) : m_db(db) {}
 
     int creeazaOcazional(int idAngajat, int idZona, int idSesizare,
-                          const std::string& descriere,
-                          double cost, const std::string& deadline) {
+        const std::string& descriere,
+        double cost, const std::string& deadline) {
         int newId = -1;
         m_db.interogheaza(
             "INSERT INTO Taskuri "
@@ -200,8 +203,8 @@ public:
     }
 
     int creeazaDaily(int idAngajat, int idZona,
-                      const std::string& descriere,
-                      double cost, const std::string& deadline) {
+        const std::string& descriere,
+        double cost, const std::string& deadline) {
         int newId = -1;
         m_db.interogheaza(
             "INSERT INTO Taskuri "
@@ -225,13 +228,14 @@ public:
                 finalizare +
                 " WHERE id_task=" + std::to_string(idTask));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     // Returneaza: (id_task, tip_task, descriere, status)
-    std::vector<std::tuple<int,std::string,std::string,std::string>>
-    getTaskuriAngajat(int idAngajat) {
-        std::vector<std::tuple<int,std::string,std::string,std::string>> res;
+    std::vector<std::tuple<int, std::string, std::string, std::string>>
+        getTaskuriAngajat(int idAngajat) {
+        std::vector<std::tuple<int, std::string, std::string, std::string>> res;
         m_db.interogheaza(
             "SELECT id_task, tip_task, descriere, status "
             "FROM Taskuri WHERE id_angajat=" + std::to_string(idAngajat) +
@@ -256,8 +260,8 @@ public:
     explicit InventarRepository(DatabaseManager& db) : m_db(db) {}
 
     int adaugaInDepozit(int idCategorie, int idFurnizor,
-                         int cantitate, double pret,
-                         const std::string& dataAchizitie) {
+        int cantitate, double pret,
+        const std::string& dataAchizitie) {
         int newId = -1;
         m_db.interogheaza(
             "INSERT INTO Inventar "
@@ -273,7 +277,7 @@ public:
     }
 
     bool instaleazaInZona(int idObiect, int idZona,
-                           const std::string& dataInstalare) {
+        const std::string& dataInstalare) {
         try {
             m_db.executa(
                 "UPDATE Inventar SET locatie='InUz', "
@@ -281,7 +285,8 @@ public:
                 ", data_instalare='" + dataInstalare + "' "
                 "WHERE id_obiect=" + std::to_string(idObiect));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     bool mutaInJunk(int idObiect) {
@@ -291,7 +296,8 @@ public:
                 "in_junk=1, stare='Casat', data_mutare_junk=GETDATE() "
                 "WHERE id_obiect=" + std::to_string(idObiect));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     bool stergeDinJunk(int idObiect) {
@@ -300,7 +306,8 @@ public:
                 "DELETE FROM Inventar "
                 "WHERE id_obiect=" + std::to_string(idObiect) + " AND in_junk=1");
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 
     struct InfoObiect {
@@ -323,12 +330,12 @@ public:
             " AND i.locatie='InUz' ORDER BY c.tip_general, c.subtip",
             [&](SQLHSTMT stmt) {
                 InfoObiect o;
-                o.id         = DatabaseManager::getColumnInt(stmt, 1);
+                o.id = DatabaseManager::getColumnInt(stmt, 1);
                 o.tipGeneral = DatabaseManager::getColumn(stmt, 2);
-                o.subtip     = DatabaseManager::getColumn(stmt, 3);
-                o.stare      = DatabaseManager::getColumn(stmt, 4);
-                o.locatie    = DatabaseManager::getColumn(stmt, 5);
-                o.pret       = DatabaseManager::getColumnDouble(stmt, 6);
+                o.subtip = DatabaseManager::getColumn(stmt, 3);
+                o.stare = DatabaseManager::getColumn(stmt, 4);
+                o.locatie = DatabaseManager::getColumn(stmt, 5);
+                o.pret = DatabaseManager::getColumnDouble(stmt, 6);
                 result.push_back(o);
             });
         return result;
@@ -344,12 +351,12 @@ public:
             "WHERE i.in_junk=1",
             [&](SQLHSTMT stmt) {
                 InfoObiect o;
-                o.id         = DatabaseManager::getColumnInt(stmt, 1);
+                o.id = DatabaseManager::getColumnInt(stmt, 1);
                 o.tipGeneral = DatabaseManager::getColumn(stmt, 2);
-                o.subtip     = DatabaseManager::getColumn(stmt, 3);
-                o.stare      = DatabaseManager::getColumn(stmt, 4);
-                o.locatie    = DatabaseManager::getColumn(stmt, 5);
-                o.pret       = DatabaseManager::getColumnDouble(stmt, 6);
+                o.subtip = DatabaseManager::getColumn(stmt, 3);
+                o.stare = DatabaseManager::getColumn(stmt, 4);
+                o.locatie = DatabaseManager::getColumn(stmt, 5);
+                o.pret = DatabaseManager::getColumnDouble(stmt, 6);
                 result.push_back(o);
             });
         return result;
@@ -379,17 +386,21 @@ public:
     explicit EvenimentRepository(DatabaseManager& db) : m_db(db) {}
 
     int creeaza(int idZona, const std::string& tip,
-                const std::string& denumire, const std::string& data,
-                const std::string& oraStart, const std::string& oraSfarsit,
-                int idFirma) {
+        const std::string& denumire, const std::string& data,
+        const std::string& oraStart, const std::string& oraSfarsit,
+        int idFirma) {
         int newId = -1;
+        // SQL Server nu permite OUTPUT direct pe tabele cu triggere.
+        // Solutie: OUTPUT ... INTO @tabel_temporar, apoi SELECT din el.
         m_db.interogheaza(
+            "DECLARE @IdNou TABLE (id_eveniment INT); "
             "INSERT INTO Evenimente "
             "(id_zona, tip_eveniment, denumire, data_eveniment, ora_start, ora_sfarsit) "
-            "OUTPUT INSERTED.id_eveniment "
+            "OUTPUT INSERTED.id_eveniment INTO @IdNou "
             "VALUES (" + std::to_string(idZona) + ",'" + tip +
             "','" + denumire + "','" + data +
-            "','" + oraStart + "','" + oraSfarsit + "')",
+            "','" + oraStart + "','" + oraSfarsit + "'); "
+            "SELECT id_eveniment FROM @IdNou;",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -413,7 +424,7 @@ public:
     explicit RaportRepository(DatabaseManager& db) : m_db(db) {}
 
     int creeaza(int idTask, int idAngajat,
-                const std::string& tip, const std::string& descriere) {
+        const std::string& tip, const std::string& descriere) {
         int newId = -1;
         m_db.interogheaza(
             "INSERT INTO Rapoarte "
@@ -437,7 +448,7 @@ public:
     explicit NotificareRepository(DatabaseManager& db) : m_db(db) {}
 
     int trimiteNotificare(int idTask, int idExpeditor,
-                           int idDestinatar, const std::string& mesaj) {
+        int idDestinatar, const std::string& mesaj) {
         int newId = -1;
         m_db.interogheaza(
             "INSERT INTO Notificari "
@@ -453,9 +464,9 @@ public:
     }
 
     // Returneaza: (id_notif, id_task, mesaj, citita)
-    std::vector<std::tuple<int,int,std::string,bool>>
-    getNotificariAngajat(int idAngajat) {
-        std::vector<std::tuple<int,int,std::string,bool>> result;
+    std::vector<std::tuple<int, int, std::string, bool>>
+        getNotificariAngajat(int idAngajat) {
+        std::vector<std::tuple<int, int, std::string, bool>> result;
         m_db.interogheaza(
             "SELECT id_notif, id_task, mesaj, citita "
             "FROM Notificari WHERE id_destinatar=" + std::to_string(idAngajat) +
@@ -476,7 +487,8 @@ public:
                 "UPDATE Notificari SET citita=1, data_citire=GETDATE() "
                 "WHERE id_notif=" + std::to_string(idNotif));
             return true;
-        } catch (...) { return false; }
+        }
+        catch (...) { return false; }
     }
 };
 
@@ -489,8 +501,8 @@ public:
     explicit AuditRepository(DatabaseManager& db) : m_db(db) {}
 
     void logeaza(int idUser, const std::string& actiune,
-                 const std::string& tabel, int idInregistrare,
-                 const std::string& detalii) {
+        const std::string& tabel, int idInregistrare,
+        const std::string& detalii) {
         try {
             m_db.executa(
                 "INSERT INTO AuditLog "
@@ -498,6 +510,7 @@ public:
                 "VALUES (" + std::to_string(idUser) +
                 ",'" + actiune + "','" + tabel + "'," +
                 std::to_string(idInregistrare) + ",'" + detalii + "')");
-        } catch (...) { /* Logging nu blocheaza operatiunea */ }
+        }
+        catch (...) { /* Logging nu blocheaza operatiunea */ }
     }
 };

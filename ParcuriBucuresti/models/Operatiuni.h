@@ -32,8 +32,8 @@ inline std::string tipTaskToString(TipTask t) {
 // ============================================================
 // CLASA ABSTRACTA TaskBase
 // ============================================================
-class TaskBase : public ISerializable,
-                 public IValidatable,
+class TaskBase : public ISerializabil,
+                 public IValidatabil,
                  public IObservable {
 protected:
     int         m_idTask;
@@ -64,9 +64,9 @@ public:
 
     virtual std::string getTipDescriptiv() const = 0;
 
-    virtual void setStatus(StatusTask novaStare) {
-        m_status = novaStare;
-        if (novaStare == StatusTask::Done)
+    virtual void setStatus(StatusTask nouaStare) {
+        m_status = nouaStare;
+        if (nouaStare == StatusTask::Done)
             notifyObservers("TASK_FINALIZAT",
                 "Task ID=" + std::to_string(m_idTask) +
                 " marcat Done de angajat ID=" +
@@ -184,7 +184,7 @@ public:
 // ============================================================
 // CLASA Sesizare
 // ============================================================
-class Sesizare : public ISerializable, public IValidatable {
+class Sesizare : public ISerializabil, public IValidatabil {
     int            m_idSesizare;
     int            m_idZona;
     int            m_idUser;
@@ -240,7 +240,7 @@ public:
 // ============================================================
 // CLASA Raport
 // ============================================================
-class Raport : public ISerializable, public IValidatable {
+class Raport : public ISerializabil, public IValidatabil {
     int         m_idRaport;
     int         m_idTask;
     int         m_idAngajat;
@@ -282,7 +282,7 @@ public:
 // CLASA Notificare
 // Admin -> Angajat: cere status lucrare
 // ============================================================
-class Notificare : public ISerializable {
+class Notificare : public ISerializabil {
     int         m_idNotif;
     int         m_idTask;
     int         m_idExpeditor;

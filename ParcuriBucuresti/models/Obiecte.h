@@ -32,7 +32,7 @@ inline std::string locatieToString(LocatieObiect l) {
 // ============================================================
 // CLASA ABSTRACTA Obiect
 // ============================================================
-class Obiect : public ISerializable, public IValidatable {
+class Obiect : public ISerializabil, public IValidatabil {
 protected:
     int            m_idObiect;
     int            m_idCategorie;
@@ -58,10 +58,10 @@ public:
     virtual std::string getSubtip()            const = 0;
     virtual std::string getDescriereCompleta() const = 0;
 
-    virtual void mutaIn(LocatieObiect novaLocatie, int novaZona = -1) {
-        m_locatie = novaLocatie;
-        m_idZona  = novaZona;
-        if (novaLocatie == LocatieObiect::Junk)
+    virtual void mutaIn(LocatieObiect nouaLocatie, int nouaZona = -1) {
+        m_locatie = nouaLocatie;
+        m_idZona  = nouaZona;
+        if (nouaLocatie == LocatieObiect::Junk)
             m_stare = StareObiect::Casat;
     }
 

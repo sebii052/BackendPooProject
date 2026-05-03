@@ -8,7 +8,7 @@
 // ============================================================
 // CLASA ABSTRACTA Eveniment
 // ============================================================
-class Eveniment : public ISerializable, public IValidatable {
+class Eveniment : public ISerializabil, public IValidatabil {
 protected:
     int         m_idEveniment;
     int         m_idZona;

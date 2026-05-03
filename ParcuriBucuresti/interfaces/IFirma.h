@@ -8,7 +8,7 @@
 // Modeleaza conceptul de firma externa cu care lucram
 // Doua implementari concrete: Organizator si Distribuitor
 // ============================================================
-class IFirma : public ISerializable, public IValidatable {
+class IFirma : public ISerializabil, public IValidatabil {
 protected:
     int         m_idFirma;
     std::string m_nume;
