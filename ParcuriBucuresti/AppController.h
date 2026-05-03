@@ -7,6 +7,7 @@
 #include "utils/HashUtils.h"
 #include "models/Utilizatori.h"
 
+// ============================================================
 // CLASA AppController
 // Punctul central al logicii de business.
 // Folosit de ClientHandler (server) pentru toate operatiunile.
@@ -15,7 +16,7 @@
 // ============================================================
 class AppController {
 private:
-    DatabaseManager&     m_db;
+    DatabaseManager& m_db;
     UtilizatorRepository m_utilizatorRepo;
     SesizareRepository   m_sesizareRepo;
     TaskRepository       m_taskRepo;
@@ -31,22 +32,23 @@ private:
 
     void m_auditLog(const std::string& actiune, int idInregistrare) {
         m_auditRepo.logeaza(m_idUserCurent, actiune,
-                            "Inventar", idInregistrare, "");
+            "Inventar", idInregistrare, "");
     }
 
 public:
     explicit AppController(DatabaseManager& db)
         : m_db(db),
-          m_utilizatorRepo(db), m_sesizareRepo(db),
-          m_taskRepo(db),       m_inventarRepo(db),
-          m_evenimentRepo(db),  m_raportRepo(db),
-          m_notificareRepo(db), m_auditRepo(db) {}
+        m_utilizatorRepo(db), m_sesizareRepo(db),
+        m_taskRepo(db), m_inventarRepo(db),
+        m_evenimentRepo(db), m_raportRepo(db),
+        m_notificareRepo(db), m_auditRepo(db) {
+    }
 
     // --------------------------------------------------------
     // AUTENTIFICARE
     // --------------------------------------------------------
     bool login(const std::string& username,
-               const std::string& parola) {
+        const std::string& parola) {
         std::string hash = HashUtils::sha256(parola);
         std::string rol;
 
@@ -54,30 +56,30 @@ public:
             return false;
 
         m_usernameCurent = username;
-        m_rolCurent      = rol;
-        m_idUserCurent   = m_utilizatorRepo.getIdAngajat(username).value_or(-1);
+        m_rolCurent = rol;
+        m_idUserCurent = m_utilizatorRepo.getIdAngajat(username).value_or(-1);
 
         m_auditRepo.logeaza(m_idUserCurent, "LOGIN",
-                            "Utilizatori", m_idUserCurent,
-                            "Login reusit: " + username);
+            "Utilizatori", m_idUserCurent,
+            "Login reusit: " + username);
         return true;
     }
 
     void logout() {
         m_auditRepo.logeaza(m_idUserCurent, "LOGOUT",
-                            "Utilizatori", m_idUserCurent,
-                            "Logout: " + m_usernameCurent);
+            "Utilizatori", m_idUserCurent,
+            "Logout: " + m_usernameCurent);
         m_usernameCurent = "";
-        m_rolCurent      = "";
-        m_idUserCurent   = -1;
+        m_rolCurent = "";
+        m_idUserCurent = -1;
     }
 
     bool registerAngajat(const std::string& username,
-                          const std::string& parola,
-                          const std::string& nume,
-                          const std::string& prenume,
-                          const std::string& email,
-                          int idZona) {
+        const std::string& parola,
+        const std::string& nume,
+        const std::string& prenume,
+        const std::string& email,
+        int idZona) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul poate crea conturi.");
 
@@ -95,12 +97,12 @@ public:
     // --------------------------------------------------------
     // GETTERI SESIUNE
     // --------------------------------------------------------
-    std::string getRolCurent()      const { return m_rolCurent;             }
-    std::string getUsernameCurent() const { return m_usernameCurent;        }
-    int         getIdUserCurent()   const { return m_idUserCurent;          }
-    bool        esteLogat()         const { return !m_rolCurent.empty();    }
-    bool        esteAdmin()         const { return m_rolCurent == "Admin";  }
-    bool        esteAngajat()       const { return m_rolCurent == "Angajat";}
+    std::string getRolCurent()      const { return m_rolCurent; }
+    std::string getUsernameCurent() const { return m_usernameCurent; }
+    int         getIdUserCurent()   const { return m_idUserCurent; }
+    bool        esteLogat()         const { return !m_rolCurent.empty(); }
+    bool        esteAdmin()         const { return m_rolCurent == "Admin"; }
+    bool        esteAngajat()       const { return m_rolCurent == "Angajat"; }
 
     // --------------------------------------------------------
     // SESIZARI
@@ -129,10 +131,10 @@ public:
     // TASKURI
     // --------------------------------------------------------
     int creeazaTaskDinSesizare(int idAngajat, int idZona,
-                                int idSesizare,
-                                const std::string& descriere,
-                                double cost,
-                                const std::string& deadline) {
+        int idSesizare,
+        const std::string& descriere,
+        double cost,
+        const std::string& deadline) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul creeaza taskuri.");
 
@@ -149,8 +151,8 @@ public:
     }
 
     int creeazaTaskDaily(int idAngajat, int idZona,
-                          const std::string& descriere,
-                          double cost, const std::string& deadline) {
+        const std::string& descriere,
+        double cost, const std::string& deadline) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul creeaza taskuri.");
 
@@ -184,11 +186,23 @@ public:
         return m_taskRepo.getTaskuriAngajat(m_idUserCurent);
     }
 
+    auto getIstoricMeu() {
+        if (!esteAngajat())
+            throw std::runtime_error("Doar angajatii au istoric propriu.");
+        return m_taskRepo.getIstoricTaskuri(m_idUserCurent);
+    }
+
+    auto getIstoricToate() {
+        if (!esteAdmin())
+            throw std::runtime_error("Doar adminul vede istoricul complet.");
+        return m_taskRepo.getIstoricToate();
+    }
+
     // --------------------------------------------------------
     // NOTIFICARI
     // --------------------------------------------------------
     int cerStatusTask(int idTask, int idAngajat,
-                       const std::string& mesaj) {
+        const std::string& mesaj) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul trimite notificari de status.");
         return m_notificareRepo.trimiteNotificare(
@@ -217,8 +231,8 @@ public:
     // INVENTAR
     // --------------------------------------------------------
     int adaugaInDepozit(int idCategorie, int cantitate,
-                         double pret, const std::string& dataAchizitie,
-                         int idFurnizor = -1) {
+        double pret, const std::string& dataAchizitie,
+        int idFurnizor = -1) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul adauga in depozit.");
         int id = m_inventarRepo.adaugaInDepozit(
@@ -267,11 +281,11 @@ public:
     // EVENIMENTE
     // --------------------------------------------------------
     int creeazaEveniment(int idZona, const std::string& tip,
-                          const std::string& denumire,
-                          const std::string& data,
-                          const std::string& oraStart,
-                          const std::string& oraSfarsit,
-                          int idFirmaOrganizator) {
+        const std::string& denumire,
+        const std::string& data,
+        const std::string& oraStart,
+        const std::string& oraSfarsit,
+        int idFirmaOrganizator) {
         if (!esteAdmin())
             throw std::runtime_error("Doar adminul creeaza evenimente.");
 

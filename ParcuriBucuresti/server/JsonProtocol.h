@@ -177,6 +177,36 @@ public:
                 raspuns["date"] = lista;
             }
 
+            else if (actiune == "get_istoric_taskuri") {
+                // Angajat: vede doar taskurile lui
+                // Admin: vede toate taskurile
+                json lista = json::array();
+                if (app.esteAdmin()) {
+                    auto istoric = app.getIstoricToate();
+                    for (const auto& [data, tip, desc, angajat] : istoric) {
+                        lista.push_back({
+                            {"data",     data},
+                            {"tip",      tip},
+                            {"descriere",desc},
+                            {"angajat",  angajat}
+                            });
+                    }
+                }
+                else {
+                    auto istoric = app.getIstoricMeu();
+                    for (const auto& [data, tip, desc, status] : istoric) {
+                        lista.push_back({
+                            {"data",     data},
+                            {"tip",      tip},
+                            {"descriere",desc},
+                            {"angajat",  ""}
+                            });
+                    }
+                }
+                raspuns["succes"] = true;
+                raspuns["date"] = lista;
+            }
+
             else if (actiune == "finalizeaza_task") {
                 bool ok = app.finalizeazaTask(cerere.value("id_task", 0));
                 raspuns["succes"] = ok;

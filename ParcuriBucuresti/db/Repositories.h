@@ -248,6 +248,50 @@ public:
         catch (...) { return false; }
     }
 
+    // Returneaza taskurile finalizate: (data_finalizare, tip_task, descriere, status)
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>>
+        getIstoricTaskuri(int idAngajat) {
+        std::vector<std::tuple<std::string, std::string, std::string, std::string>> res;
+        m_db.interogheaza(
+            "SELECT ISNULL(CONVERT(VARCHAR(19), data_finalizare, 120), data_creare), "
+            "       tip_task, descriere, status "
+            "FROM Taskuri WHERE id_angajat=" + std::to_string(idAngajat) +
+            " AND status IN ('Done','Anulat') "
+            "ORDER BY data_creare DESC",
+            [&](SQLHSTMT stmt) {
+                std::string data = DatabaseManager::getColumn(stmt, 1);
+                std::string tip = DatabaseManager::getColumn(stmt, 2);
+                std::string desc = DatabaseManager::getColumn(stmt, 3);
+                std::string status = DatabaseManager::getColumn(stmt, 4);
+                res.emplace_back(data, tip, desc, status);
+            });
+        return res;
+    }
+
+    // Returneaza istoricul TUTUROR taskurilor finalizate (pentru Admin)
+    // (data, tip, descriere, nume_angajat)
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>>
+        getIstoricToate() {
+        std::vector<std::tuple<std::string, std::string, std::string, std::string>> res;
+        m_db.interogheaza(
+            "SELECT ISNULL(CONVERT(VARCHAR(19), t.data_finalizare, 120), "
+            "              CONVERT(VARCHAR(19), t.data_creare, 120)), "
+            "       t.tip_task, t.descriere, "
+            "       u.prenume + ' ' + u.nume "
+            "FROM Taskuri t "
+            "JOIN Utilizatori u ON u.id_user = t.id_angajat "
+            "WHERE t.status IN ('Done','Anulat') "
+            "ORDER BY t.data_creare DESC",
+            [&](SQLHSTMT stmt) {
+                std::string data = DatabaseManager::getColumn(stmt, 1);
+                std::string tip = DatabaseManager::getColumn(stmt, 2);
+                std::string desc = DatabaseManager::getColumn(stmt, 3);
+                std::string angajat = DatabaseManager::getColumn(stmt, 4);
+                res.emplace_back(data, tip, desc, angajat);
+            });
+        return res;
+    }
+
     // Returneaza: (id_task, tip_task, descriere, status)
     std::vector<std::tuple<int, std::string, std::string, std::string>>
         getTaskuriAngajat(int idAngajat) {
