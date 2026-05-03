@@ -16,12 +16,34 @@
 #pragma comment(lib, "odbc32.lib")
 
 namespace DbInternal {
+    // std::string (UTF-8) -> std::wstring (UTF-16)
     inline std::wstring toWide(const std::string& s) {
-        return std::wstring(s.begin(), s.end());
+        if (s.empty()) return L"";
+        int len = MultiByteToWideChar(CP_UTF8, 0,
+            s.c_str(), static_cast<int>(s.size()),
+            nullptr, 0);
+        std::wstring result(len, 0);
+        MultiByteToWideChar(CP_UTF8, 0,
+            s.c_str(), static_cast<int>(s.size()),
+            &result[0], len);
+        return result;
     }
+
+    // std::wstring (UTF-16) -> std::string (UTF-8)
+    // Folosit pentru datele citite din SQL Server — pastreaza diacriticele
     inline std::string fromWide(const wchar_t* ws) {
-        std::wstring w(ws);
-        return std::string(w.begin(), w.end());
+        if (!ws || ws[0] == L'\0') return "";
+        int len = WideCharToMultiByte(CP_UTF8, 0,
+            ws, -1,
+            nullptr, 0,
+            nullptr, nullptr);
+        if (len <= 0) return "";
+        std::string result(len - 1, 0); // len include null terminator
+        WideCharToMultiByte(CP_UTF8, 0,
+            ws, -1,
+            &result[0], len,
+            nullptr, nullptr);
+        return result;
     }
 }
 #endif
@@ -214,22 +236,35 @@ public:
     // --------------------------------------------------------
     static std::string getColumn(SQLHSTMT stmt,
         SQLUSMALLINT col) {
-        SQLWCHAR buf[512];
+        SQLWCHAR buf[2048];  // suficient pentru texte lungi cu diacritice
         SQLLEN   indicator;
+        buf[0] = L'\0';
         SQLGetData(stmt, col, SQL_C_WCHAR,
             buf, sizeof(buf), &indicator);
         if (indicator == SQL_NULL_DATA) return "";
+        buf[2047] = L'\0';  // null terminator de siguranta
         return DbInternal::fromWide(buf);
     }
 
     static int getColumnInt(SQLHSTMT stmt,
         SQLUSMALLINT col) {
-        SQLINTEGER val = 0;
-        SQLLEN     indicator;
-        SQLGetData(stmt, col, SQL_C_LONG,
-            &val, sizeof(val), &indicator);
-        if (indicator == SQL_NULL_DATA) return 0;
-        return static_cast<int>(val);
+        // Citim ca string si convertim la int
+        // SQL_C_LONG poate returna 0 gresit pe unele configuratii ODBC
+        SQLWCHAR buf[64] = { 0 };
+        SQLLEN   indicator = 0;
+        SQLGetData(stmt, col, SQL_C_WCHAR,
+            buf, sizeof(buf), &indicator);
+        if (indicator == SQL_NULL_DATA || indicator <= 0) return 0;
+        buf[63] = L'\0';
+        // Convertire simpla wchar -> string -> int
+        std::wstring ws(buf);
+        if (ws.empty()) return 0;
+        try {
+            return std::stoi(std::string(ws.begin(), ws.end()));
+        }
+        catch (...) {
+            return 0;
+        }
     }
 
     static double getColumnDouble(SQLHSTMT stmt,

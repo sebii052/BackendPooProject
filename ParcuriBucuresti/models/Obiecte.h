@@ -4,9 +4,8 @@
 #include "../interfaces/ISerializable.h"
 #include "../interfaces/IValidatable.h"
 
-// ============================================================
+
 // ENUM-URI pentru starea si locatia obiectelor
-// ============================================================
 enum class StareObiect   { Functional, Defect, InReparatie, Casat };
 enum class LocatieObiect { InUz, Depozit, Junk };
 
@@ -29,9 +28,12 @@ inline std::string locatieToString(LocatieObiect l) {
     return "Necunoscut";
 }
 
-// ============================================================
-// CLASA ABSTRACTA Obiect
-// ============================================================
+
+
+
+
+
+
 class Obiect : public ISerializabil, public IValidatabil {
 protected:
     int            m_idObiect;
@@ -93,9 +95,18 @@ public:
     }
 };
 
-// ============================================================
-// ObiectNatural
-// ============================================================
+
+
+
+
+
+
+
+
+
+
+
+
 class ObiectNatural : public Obiect {
 public:
     ObiectNatural(int id, int idCategorie, int idZona,
@@ -106,6 +117,12 @@ public:
                  descriere, dataAchizitie, pret) {}
     std::string getTipGeneral() const override { return "Natural"; }
 };
+
+
+
+
+
+
 
 class Copac : public ObiectNatural {
     std::string m_specie;
@@ -128,6 +145,12 @@ public:
     }
 };
 
+
+
+
+
+
+
 class FloriRond : public ObiectNatural {
     std::string m_tipFlori;
 public:
@@ -146,6 +169,11 @@ public:
     }
 };
 
+
+
+
+
+
 class Iarba : public ObiectNatural {
     double m_suprafataMP;
 public:
@@ -162,6 +190,11 @@ public:
         return "Suprafata iarba | " + std::to_string(m_suprafataMP) + " mp";
     }
 };
+
+
+
+
+
 
 class Nisip : public ObiectNatural {
     double m_suprafataMP;
@@ -180,9 +213,11 @@ public:
     }
 };
 
-// ============================================================
-// ObiectUtilitate
-// ============================================================
+
+
+
+
+
 class ObiectUtilitate : public Obiect {
 public:
     ObiectUtilitate(int id, int idCategorie, int idZona,
@@ -193,6 +228,11 @@ public:
                  descriere, dataAchizitie, pret) {}
     std::string getTipGeneral() const override { return "Utilitati"; }
 };
+
+
+
+
+
 
 class CosGunoi : public ObiectUtilitate {
     std::string m_material;
@@ -211,6 +251,12 @@ public:
         return "Cos gunoi | Material: " + m_material;
     }
 };
+
+
+
+
+
+
 
 class Toaleta : public ObiectUtilitate {
     bool m_esteAccesibila;
@@ -231,6 +277,12 @@ public:
     }
 };
 
+
+
+
+
+
+
 class Cismea : public ObiectUtilitate {
     bool m_esteOperationala;
 public:
@@ -250,9 +302,12 @@ public:
     }
 };
 
-// ============================================================
-// ObiectDecorativ
-// ============================================================
+
+
+
+
+
+
 class ObiectDecorativ : public Obiect {
 public:
     ObiectDecorativ(int id, int idCategorie, int idZona,
@@ -263,6 +318,13 @@ public:
                  descriere, dataAchizitie, pret) {}
     std::string getTipGeneral() const override { return "Decorative"; }
 };
+
+
+
+
+
+
+
 
 class Banca : public ObiectDecorativ {
     std::string m_material;
@@ -285,6 +347,12 @@ public:
     }
 };
 
+
+
+
+
+
+
 class Statuie : public ObiectDecorativ {
     std::string m_autor;
     int         m_anInstalare;
@@ -306,6 +374,13 @@ public:
     }
 };
 
+
+
+
+
+
+
+
 class MasaSah : public ObiectDecorativ {
 public:
     MasaSah(int id, int idCategorie, int idZona,
@@ -320,9 +395,11 @@ public:
     }
 };
 
-// ============================================================
-// ObiectPlayground
-// ============================================================
+
+
+
+
+
 class ObiectPlayground : public Obiect {
     int m_varstaMinima;
     int m_varstaMaxima;
@@ -340,6 +417,10 @@ public:
     int getVarstaMaxima() const { return m_varstaMaxima; }
 };
 
+
+
+
+
 class Tobogan : public ObiectPlayground {
     double m_inaltimeM;
 public:
@@ -356,6 +437,10 @@ public:
         return "Tobogan | Inaltime: " + std::to_string(m_inaltimeM) + " m";
     }
 };
+
+
+
+
 
 class Balansoar : public ObiectPlayground {
     int m_nrLocuri;
@@ -375,6 +460,10 @@ public:
     }
 };
 
+
+
+
+
 class Carusel : public ObiectPlayground {
     int m_capacitate;
 public:
@@ -393,6 +482,10 @@ public:
     }
 };
 
+
+
+
+
 class Leagan : public ObiectPlayground {
     std::string m_tipLeagan;
 public:
@@ -410,9 +503,11 @@ public:
     }
 };
 
-// ============================================================
-// ObiectSport
-// ============================================================
+
+
+
+
+
 class ObiectSport : public ObiectPlayground {
 public:
     ObiectSport(int id, int idCategorie, int idZona,

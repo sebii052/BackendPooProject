@@ -49,6 +49,8 @@ public:
         return found;
     }
 
+    // Returneaza true daca contul a fost creat
+    // Returneaza false + seteaza mesajul de eroare daca username/email exista deja
     bool inregistreazaAngajat(const std::string& username,
         const std::string& parolaHash,
         const std::string& nume,
@@ -64,7 +66,19 @@ public:
                 "','" + email + "'," + std::to_string(idZonaAlocata) + ")");
             return true;
         }
-        catch (...) { return false; }
+        catch (const std::exception& e) {
+            // SQL Server returneaza eroare 2627 pentru UNIQUE constraint violation
+            // (username sau email duplicat)
+            std::string err = e.what();
+            if (err.find("2627") != std::string::npos ||
+                err.find("UNIQUE") != std::string::npos ||
+                err.find("duplicate") != std::string::npos) {
+                throw std::runtime_error(
+                    "Username-ul sau email-ul '" + username +
+                    "' exista deja in sistem.");
+            }
+            throw; // re-arunca orice alta eroare
+        }
     }
 
     struct InfoAngajat {
@@ -124,11 +138,11 @@ public:
     int creeaza(int idZona, int idUser, const std::string& descriere) {
         std::string userVal = (idUser == -1) ? "NULL" : std::to_string(idUser);
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO Sesizari (id_zona, id_user, descriere) "
-            "OUTPUT INSERTED.id_sesizare "
             "VALUES (" + std::to_string(idZona) + "," +
-            userVal + ",'" + descriere + "')",
+            userVal + ",'" + descriere + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -188,14 +202,16 @@ public:
         const std::string& descriere,
         double cost, const std::string& deadline) {
         int newId = -1;
-        m_db.interogheaza(
+        // INSERT fara OUTPUT (evita problema cu trigger + OUTPUT)
+        m_db.executa(
             "INSERT INTO Taskuri "
             "(id_angajat, id_zona, id_sesizare, tip_task, descriere, cost_estimat, deadline) "
-            "OUTPUT INSERTED.id_task "
             "VALUES (" + std::to_string(idAngajat) + "," +
             std::to_string(idZona) + "," + std::to_string(idSesizare) +
             ",'Reparatie','" + descriere + "'," +
-            std::to_string(cost) + ",'" + deadline + "')",
+            std::to_string(cost) + ",'" + deadline + "')");
+        // Obtine ID-ul generat prin SCOPE_IDENTITY()
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -206,13 +222,13 @@ public:
         const std::string& descriere,
         double cost, const std::string& deadline) {
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO Taskuri "
             "(id_angajat, id_zona, tip_task, descriere, cost_estimat, deadline) "
-            "OUTPUT INSERTED.id_task "
             "VALUES (" + std::to_string(idAngajat) + "," +
             std::to_string(idZona) + ",'Mentenanta','" +
-            descriere + "'," + std::to_string(cost) + ",'" + deadline + "')",
+            descriere + "'," + std::to_string(cost) + ",'" + deadline + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -263,13 +279,13 @@ public:
         int cantitate, double pret,
         const std::string& dataAchizitie) {
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO Inventar "
             "(id_categorie, locatie, stare, cantitate, pret_achizitie, data_achizitie) "
-            "OUTPUT INSERTED.id_obiect "
             "VALUES (" + std::to_string(idCategorie) +
             ",'Depozit','Functional'," + std::to_string(cantitate) +
-            "," + std::to_string(pret) + ",'" + dataAchizitie + "')",
+            "," + std::to_string(pret) + ",'" + dataAchizitie + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -364,12 +380,12 @@ public:
 
     int alocaPiesaAngajat(int idAngajat, int idObiect, int idTask) {
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO InventarAngajat "
             "(id_angajat, id_obiect, id_task, stare_gestiune) "
-            "OUTPUT INSERTED.id_gestiune "
             "VALUES (" + std::to_string(idAngajat) + "," +
-            std::to_string(idObiect) + "," + std::to_string(idTask) + ",'Alocat')",
+            std::to_string(idObiect) + "," + std::to_string(idTask) + ",'Alocat')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -392,15 +408,13 @@ public:
         int newId = -1;
         // SQL Server nu permite OUTPUT direct pe tabele cu triggere.
         // Solutie: OUTPUT ... INTO @tabel_temporar, apoi SELECT din el.
-        m_db.interogheaza(
-            "DECLARE @IdNou TABLE (id_eveniment INT); "
+        m_db.executa(
             "INSERT INTO Evenimente "
             "(id_zona, tip_eveniment, denumire, data_eveniment, ora_start, ora_sfarsit) "
-            "OUTPUT INSERTED.id_eveniment INTO @IdNou "
             "VALUES (" + std::to_string(idZona) + ",'" + tip +
             "','" + denumire + "','" + data +
-            "','" + oraStart + "','" + oraSfarsit + "'); "
-            "SELECT id_eveniment FROM @IdNou;",
+            "','" + oraStart + "','" + oraSfarsit + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -426,12 +440,12 @@ public:
     int creeaza(int idTask, int idAngajat,
         const std::string& tip, const std::string& descriere) {
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO Rapoarte "
             "(id_task, id_angajat, tip_raport, descriere) "
-            "OUTPUT INSERTED.id_raport "
             "VALUES (" + std::to_string(idTask) + "," +
-            std::to_string(idAngajat) + ",'" + tip + "','" + descriere + "')",
+            std::to_string(idAngajat) + ",'" + tip + "','" + descriere + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -450,13 +464,13 @@ public:
     int trimiteNotificare(int idTask, int idExpeditor,
         int idDestinatar, const std::string& mesaj) {
         int newId = -1;
-        m_db.interogheaza(
+        m_db.executa(
             "INSERT INTO Notificari "
             "(id_task, id_expeditor, id_destinatar, mesaj) "
-            "OUTPUT INSERTED.id_notif "
             "VALUES (" + std::to_string(idTask) + "," +
             std::to_string(idExpeditor) + "," +
-            std::to_string(idDestinatar) + ",'" + mesaj + "')",
+            std::to_string(idDestinatar) + ",'" + mesaj + "')");
+        m_db.interogheaza("SELECT CAST(SCOPE_IDENTITY() AS INT)",
             [&](SQLHSTMT stmt) {
                 newId = DatabaseManager::getColumnInt(stmt, 1);
             });
@@ -507,7 +521,7 @@ public:
             m_db.executa(
                 "INSERT INTO AuditLog "
                 "(id_user, actiune, tabel_afectat, id_inregistrare, detalii) "
-                "VALUES (" + std::to_string(idUser) +
+                "VALUES (" + (idUser <= 0 ? std::string("NULL") : std::to_string(idUser)) +
                 ",'" + actiune + "','" + tabel + "'," +
                 std::to_string(idInregistrare) + ",'" + detalii + "')");
         }

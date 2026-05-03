@@ -7,7 +7,6 @@
 #include "utils/HashUtils.h"
 #include "models/Utilizatori.h"
 
-// ============================================================
 // CLASA AppController
 // Punctul central al logicii de business.
 // Folosit de ClientHandler (server) pentru toate operatiunile.

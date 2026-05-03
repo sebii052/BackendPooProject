@@ -18,7 +18,7 @@ public:
     // Proceseaza un mesaj JSON primit de la client
     // Returneaza raspunsul JSON ca string
     static std::string proceseaza(const std::string& mesajJson,
-                                   AppController& app) {
+        AppController& app) {
         json raspuns;
         try {
             json cerere = json::parse(mesajJson);
@@ -29,14 +29,15 @@ public:
             // ------------------------------------------------
             if (actiune == "login") {
                 std::string username = cerere.value("username", "");
-                std::string parola   = cerere.value("parola", "");
+                std::string parola = cerere.value("parola", "");
 
                 if (app.login(username, parola)) {
                     raspuns["succes"] = true;
-                    raspuns["rol"]    = app.getRolCurent();
-                    raspuns["id_user"]= app.getIdUserCurent();
-                    raspuns["mesaj"]  = "Login reusit.";
-                } else {
+                    raspuns["rol"] = app.getRolCurent();
+                    raspuns["id_user"] = app.getIdUserCurent();
+                    raspuns["mesaj"] = "Login reusit.";
+                }
+                else {
                     raspuns["succes"] = false;
                     raspuns["eroare"] = "Credentiale invalide.";
                 }
@@ -45,19 +46,42 @@ public:
             else if (actiune == "logout") {
                 app.logout();
                 raspuns["succes"] = true;
-                raspuns["mesaj"]  = "Deconectat.";
+                raspuns["mesaj"] = "Deconectat.";
             }
 
             else if (actiune == "register_angajat") {
-                bool ok = app.registerAngajat(
-                    cerere.value("username", ""),
-                    cerere.value("parola", ""),
-                    cerere.value("nume", ""),
-                    cerere.value("prenume", ""),
-                    cerere.value("email", ""),
-                    cerere.value("id_zona", 0));
-                raspuns["succes"] = ok;
-                if (!ok) raspuns["eroare"] = "Nu s-a putut crea contul.";
+                std::string username = cerere.value("username", "");
+                std::string parola = cerere.value("parola", "");
+                std::string nume = cerere.value("nume", "");
+                std::string prenume = cerere.value("prenume", "");
+                std::string email = cerere.value("email", "");
+                int         idZona = cerere.value("id_zona", 0);
+
+                // Validare pe server
+                if (username.empty()) {
+                    raspuns["succes"] = false;
+                    raspuns["eroare"] = "Username-ul nu poate fi gol.";
+                }
+                else if (parola.size() < 4) {
+                    raspuns["succes"] = false;
+                    raspuns["eroare"] = "Parola trebuie sa aiba minim 4 caractere.";
+                }
+                else if (email.find('@') == std::string::npos) {
+                    raspuns["succes"] = false;
+                    raspuns["eroare"] = "Adresa de email nu este valida.";
+                }
+                else if (idZona <= 0) {
+                    raspuns["succes"] = false;
+                    raspuns["eroare"] = "Selectati o zona valida.";
+                }
+                else {
+                    bool ok = app.registerAngajat(
+                        username, parola, nume, prenume, email, idZona);
+                    raspuns["succes"] = ok;
+                    if (!ok)
+                        raspuns["eroare"] = "Nu s-a putut crea contul. "
+                        "Username-ul sau email-ul exista deja in sistem.";
+                }
             }
 
             // ------------------------------------------------
@@ -74,10 +98,10 @@ public:
                         {"idZona",       a.idZona},
                         {"esteLiber",    a.esteLiber},
                         {"idTaskCurent", a.idTaskCurent}
-                    });
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             // ------------------------------------------------
@@ -87,8 +111,8 @@ public:
                 int id = app.creeazaSesizare(
                     cerere.value("id_zona", 0),
                     cerere.value("descriere", ""));
-                raspuns["succes"]     = (id > 0);
-                raspuns["id_sesizare"]= id;
+                raspuns["succes"] = (id > 0);
+                raspuns["id_sesizare"] = id;
             }
 
             else if (actiune == "get_sesizari") {
@@ -100,10 +124,10 @@ public:
                         {"idZona",    idZona},
                         {"descriere", desc},
                         {"data",      data}
-                    });
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             else if (actiune == "ignora_sesizare") {
@@ -122,7 +146,7 @@ public:
                     cerere.value("descriere", ""),
                     cerere.value("cost", 0.0),
                     cerere.value("deadline", ""));
-                raspuns["succes"]  = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_task"] = id;
             }
 
@@ -133,7 +157,7 @@ public:
                     cerere.value("descriere", ""),
                     cerere.value("cost", 0.0),
                     cerere.value("deadline", ""));
-                raspuns["succes"]  = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_task"] = id;
             }
 
@@ -145,11 +169,12 @@ public:
                         {"id",        id},
                         {"tip",       tip},
                         {"descriere", desc},
-                        {"status",    status}
-                    });
+                        {"status",    status},
+                        {"locatie",   "Zona 1"}
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             else if (actiune == "finalizeaza_task") {
@@ -165,7 +190,7 @@ public:
                     cerere.value("id_task", 0),
                     cerere.value("id_angajat", 0),
                     cerere.value("mesaj", ""));
-                raspuns["succes"]   = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_notif"] = id;
             }
 
@@ -178,10 +203,10 @@ public:
                         {"idTask", idTask},
                         {"mesaj",  mesaj},
                         {"citita", citita}
-                    });
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             else if (actiune == "citeste_notificare") {
@@ -197,7 +222,7 @@ public:
                 int id = app.creeazaRaportStatus(
                     cerere.value("id_task", 0),
                     cerere.value("descriere", ""));
-                raspuns["succes"]    = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_raport"] = id;
             }
 
@@ -216,10 +241,10 @@ public:
                         {"stare",      o.stare},
                         {"locatie",    o.locatie},
                         {"pret",       o.pret}
-                    });
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             else if (actiune == "adauga_in_depozit") {
@@ -229,7 +254,7 @@ public:
                     cerere.value("pret", 0.0),
                     cerere.value("data_achizitie", ""),
                     cerere.value("id_furnizor", -1));
-                raspuns["succes"]    = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_obiect"] = id;
             }
 
@@ -253,10 +278,10 @@ public:
                         {"subtip",     o.subtip},
                         {"stare",      o.stare},
                         {"pret",       o.pret}
-                    });
+                        });
                 }
                 raspuns["succes"] = true;
-                raspuns["date"]   = lista;
+                raspuns["date"] = lista;
             }
 
             // ------------------------------------------------
@@ -271,7 +296,7 @@ public:
                     cerere.value("ora_start", ""),
                     cerere.value("ora_sfarsit", ""),
                     cerere.value("id_firma", 0));
-                raspuns["succes"]       = (id > 0);
+                raspuns["succes"] = (id > 0);
                 raspuns["id_eveniment"] = id;
             }
 
@@ -283,10 +308,12 @@ public:
                 raspuns["eroare"] = "Actiune necunoscuta: " + actiune;
             }
 
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             raspuns["succes"] = false;
             raspuns["eroare"] = std::string(e.what());
-        } catch (...) {
+        }
+        catch (...) {
             raspuns["succes"] = false;
             raspuns["eroare"] = "Eroare interna necunoscuta.";
         }

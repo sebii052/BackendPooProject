@@ -26,9 +26,9 @@ inline std::string tipZonaToString(TipZona t) {
     return "Necunoscut";
 }
 
-// ============================================================
-// CLASA Zona
-// ============================================================
+
+
+
 class Zona : public ISerializabil, public IValidatabil {
 private:
     int         m_idZona;
@@ -109,9 +109,12 @@ public:
     }
 };
 
-// ============================================================
-// CLASA Parc
-// ============================================================
+
+
+
+
+
+
 class Parc : public ISerializabil, public IValidatabil {
 private:
     int         m_idParc;
